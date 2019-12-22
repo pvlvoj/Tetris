@@ -1,0 +1,196 @@
+var timer;
+		
+drawGameCanvas();
+
+	
+	$("#tlacitko").click(function(){
+		
+		isPlaying = true;
+	});
+	
+	
+	$("#addRow").click(function(){ 
+	
+		setRow(rowNum + 1);
+	});
+	
+	$("#addCol").click(function() {
+		
+		setCol(colNum + 1);
+	});
+	
+	$("#posunDolu").click(function() {
+		
+		if(shape == null){
+			createShape();
+		}
+		timer = setInterval(moveD, 200);
+	});
+	
+	$("#posunR").click(function() {
+		
+		shape.moveRight();
+	});
+	
+	
+	function moveD() {
+		
+		shape.moveDown();
+	}
+	
+	function createShape(){
+		
+		shape = new Shape([1, 1, 0, 0], [0, 1, 1, 0], [0, 0, 0, 0], [0, 0, 0, 0], randPick[shapeColors], 2, 3);
+	}
+	
+	function randPick(array){
+				
+        return array[Math.random() * array.length];  
+         
+	}
+	
+	/************************************************************
+	 * Konstruktor tvaru podle radku
+	 */
+	function Shape(a, b, c, d, color, width, height){
+
+		this.x = Math.round(colNum/2)-2;
+		this.y = 0;
+		
+		this.a = a;
+		this.b = b;
+		this.c = c;
+		this.d = d;
+		
+		this.width = width;
+		this.height = height;
+		
+		this.color = color;
+		
+		this.moveDown = function(){
+			
+			if((this.y + this.height) < (rowNum + 1)){
+				this.removeShape();
+				this.y++;
+				this.draw(this.color);
+			}
+			else{
+				clearInterval(timer);
+				createShape();
+			}
+		}
+		
+		this.moveLeft = function() {
+			
+			this.removeShape();
+			if(this.x != 0){
+				this.x--;
+			}
+			this.draw(this.color);
+		}
+		
+		this.moveRight = function() {
+			
+			this.removeShape();
+			if(this.x != (colNum-1)-this.width){
+				this.x++;
+			}
+			this.draw(this.color);
+		}
+		
+		this.draw = function(color) {
+			
+			this.drawRow(a, 0, color);
+			this.drawRow(b, 1, color);
+			this.drawRow(c, 2, color);
+			this.drawRow(d, 3, color);
+		}
+		
+		
+		this.drawRow = function(row, rowIndex, color) {
+			
+			for(i = 0; i<4; i++){
+				
+				if(row[i] == 1){
+					var r = rowIndex + this.y;
+					var c = i + this.x;
+					$("#r" + r + "c" + c).css("backgroundColor", color);
+				}
+			}
+		}
+		this.removeShape = function() {
+			
+			this.draw("white");
+		}
+	}
+	
+
+
+	/************************************************************
+	 * Funkce vykreslujici nove hraci okno (tabulku) jako reakci
+	 * na stistk tlacitka uzivatelem
+	 */
+	 function drawGameCanvas() {
+		
+		$("#gameCanvas").empty();
+		console.log("Drawing new empty canvas");
+		$("td").css({"width":"20", "height":"20"});
+		var table = "";
+		for(i = 0; i<rowNum; i++){
+			
+			table = table + "<tr id='r" + i + "'>";
+			for(j = 0; j<colNum; j++){
+				
+				table = table + "<td id='r" + i + "c" + j + "'></td>";
+			}	
+			table = table + "</tr>";
+		}
+		$("#gameCanvas").append(table);		
+		console.log("Canvas ready; Number of colls = " + colNum + " and number of rows = " + rowNum);
+		//isPlaying = true;
+	};
+	
+	
+	/************************************************************
+	 * Funkce pridavajici novy radek do hraciho okna
+	 */
+	 function setRow(num) {
+		 
+		if(isPlaying){
+			if(confirm("Opravdu chcete ukoncit hru?")){
+				isPlaying = false;
+				rowNum = num;
+				drawGameCanvas();
+			}
+		} else {
+			rowNum = num;
+			drawGameCanvas();
+		}
+	};
+
+	
+	/************************************************************
+	 * Funkce pridavajici novy sloupec do hraciho okna
+	 */
+	 function setCol(num) {
+	
+		if(isPlaying){
+			if(confirm("Opravdu chcete ukoncit hru?")){
+				isPlaying = false;
+				colNum = num;
+				drawGameCanvas();
+			}
+		} else {
+			colNum = num;
+			drawGameCanvas();
+		}
+	};
+	
+
+	/************************************************************
+	 * Funkce na generovani nahodneho cisla v zadanem rozsahu
+	 */
+	function randInt(min, max) {
+		
+		return Math.floor(Math.random() * (max - min + 1) + min);
+	}
