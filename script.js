@@ -11,6 +11,199 @@ $(document).ready(function() {
 
 	/* Indikator, zda uzivatel prave hraje */
 	let isPlaying = false;
+	
+	let emptyColor = "rgba(0, 128, 0, 0.2)";
+
+
+	/**************************************************************************
+	Trida Shape
+	***************************************************************************/
+	
+	
+	
+	class Shape{
+		
+		constructor(shape, color){
+		
+			this.x = 0;
+			this.y = 0;
+			this.shape = shape;
+			this.color = color;
+		}
+		
+		log(){
+			
+			console.log("color: " + this.color + "; width: " + this.countWidth() + "; height: " + this.countHeight());
+		}
+		
+		countHeight(){
+			
+			if(this.shape[3].includes(1)){
+				
+				this.height = 4;
+				return 4;
+			} else if (this.shape[2].includes(1)){
+				
+				this.height = 3;
+				return 3;
+			} else if (this.shape[1].includes(1)) {
+				
+				this.height = 2;
+				return 2;
+			} else {
+				this.height = 1;
+				return 1;
+			}
+		}
+		
+		countWidth(){
+			
+			var rowWidths = [this.crw(this.shape[0]), this.crw(this.shape[1]), this.crw(this.shape[2]), this.crw(this.shape[3])];
+			var result = Math.max(...rowWidths);
+			this.width = result;
+			return result;
+		}
+		
+		crw(row){
+			
+			var result = 0;
+			
+			for(let i = 0; i<4; i++){
+				
+				if(row[i]==1){
+					result = i+1;
+				}
+			}
+			return result;
+		}
+		
+		rotate() {
+			
+			var nShape = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
+			
+			for(var i = 0; i<4; i++){
+				
+				for(var j = 0; j<4; j++) {
+					
+					if(this.shape[i][j] == 1) {
+						
+						nShape[j][i] = 1;
+					}
+				}
+			}
+			
+			return nShape;
+		}
+		
+		
+		draw(color){
+		
+			for(var i = 0; i < 4; i++) {
+				
+				for(var j = 0; j < 4 ; j++) {
+					
+					if(this.shape[i][j] == 1){
+							
+						$("#r"+(i+this.y)+"c"+(j+ this.x)).css("backgroundColor", color);
+					}
+				}
+			}
+		}
+		
+		clear(){
+			
+			this.draw(emptyColor);
+		}
+		
+		moveD() {
+			
+			if((this.y + this.countHeight()) < defRowNum){
+				if(this.checkDown()){
+					this.y++;
+					this.draw(this.color);
+					return true;
+				}
+				else {
+					checkForFullLines();
+					return false;
+				}
+			}
+			else {
+				return false;
+			}
+		}
+		
+		checkDown() {
+			
+			var ok = true;
+			this.clear();
+			
+			for(var i = 0; i<4; i++) {
+				
+				for(var j = 0; j<4; j++) {
+					
+					var bc = $("#r"+(i + this.y + 1)+"c"+(j + this.x)).css("backgroundColor");
+					
+					if((bc != emptyColor) && (this.shape[i][j] == 1)) {
+						this.draw(this.color);
+						ok = false;
+					}
+				}
+			}
+			return ok;
+		}
+		
+		moveLeft() {
+			
+			var ok = true;
+			this.clear();
+			
+			for(var i = 0; i<4; i++) {
+				
+				for(var j = 0; j<4; j++) {
+					
+					var bc = $("#r"+(i + this.y)+"c"+(j + this.x-1)).css("backgroundColor");
+					
+					if((bc != emptyColor) && (this.shape[i][j] == 1)) {
+						this.draw(this.color);
+						ok = false;
+					}
+				}
+			}
+			if(ok){
+				this.x--;
+				this.draw(this.color);
+			}
+		}
+		
+		moveRight() {
+			
+			var ok = true;
+			this.clear();
+			
+			for(var i = 0; i<4; i++) {
+				
+				for(var j = 0; j<4; j++) {
+					
+					var bc = $("#r"+(i + this.y)+"c"+(j + this.x+1)).css("backgroundColor");
+					
+					if((bc != emptyColor) && (this.shape[i][j] == 1)) {
+						this.draw(this.color);
+						ok = false;
+					}
+				}
+			}
+			
+			if(ok){
+				this.x++;
+			}
+			this.draw(this.color);
+		}
+	}
+
+
+
+
 
 	/* [
 		[, , , ],
@@ -46,7 +239,7 @@ $(document).ready(function() {
 		],
 	];
 
-	let shapeColors = ["red", "blue", "purple", "yellow", "green", "orange", "pink", "cyan"];
+	let shapeColors = ["red", "blue", "purple", "yellow", "green", "orange", "pink"];
 
 	let shape = new Shape(randomArrayPick(shapes), randomArrayPick(shapeColors));
 	
@@ -57,21 +250,28 @@ $(document).ready(function() {
 		$("#gameCanvas").empty();
 		
 		var table = "";
-		for(i = 0; i<4; i++){
+		for(i = 0; i<defRowNum; i++){
 			
 			table = table + "<tr id='r" + i + "'>";
-			for(j = 0; j<4; j++){
+			for(j = 0; j<defColNum; j++){
 				
 				table = table + "<td id='r" + i + "c" + j + "'></td>";
 			}	
 			table = table + "</tr>";
 		}
 		$("#gameCanvas").append(table);
+		$("td").css("backgroundColor", emptyColor);
 	});
 
 	$("#posunDolu").click(function(){
 		
-		setInterval(mng, 100);
+		setInterval(moveDown, 200);
+	});
+	
+	
+	$("#posunR").click(function(){
+		
+		shape.moveRight();
 	});
 	
 	
@@ -96,104 +296,65 @@ $(document).ready(function() {
 		shape.clear();
 	}
 	
+	function moveDown() {
+		
+		if(state){
+			if(!shape.moveD()) {
+				shape = new Shape(randomArrayPick(shapes), randomArrayPick(shapeColors));
+				shape.moveD();
+			}
+			state = false;
+		}
+		else{
+			state = true;
+		}
+	}
+	
 	
 	function drawShape(){
 		
 		shape.draw();
 	}
 	
+	function checkForFullLines() {
+		
+		for(var i = defRowNum - 1; i > (-1); i--) {
+			
+			if(checkForLine(i)){
+				
+				emptyTheLine(i);
+			}
+		}
+	}
 	
+	function checkForLine(index) {
+		
+		var fullLine = true;
+		
+		if(index > defRowNum){
+			
+			fullLine =  false;
+		}
+		
+		for(var i = 0; i < defColNum; i++) {
+			
+			var bc = $("#r" + index + "c" + i).css("backgroundColor");
+			
+			if(bc == emptyColor) {
+				
+				fullLine = false;
+				break;
+			}
+		}
+		
+		return fullLine;
+	}
 	
-	
-	function Shape(shape, color){
+	function emptyTheLine(index) {
 		
-		this.x = 0;
-		this.y = 0;
-		this.shape = shape;
-		this.color = color;
-		
-		this.log = function(){
+		for(var i = 0; i < defColNum; i++) {
 			
-			console.log("color: " + this.color + "; width: " + this.countWidth() + "; height: " + this.countHeight());
-		}
-		
-		this.countHeight = function(){
-			
-			if(this.shape[3].includes(1)){
-				
-				this.height = 4;
-				return 4;
-			} else if (this.shape[2].includes(1)){
-				
-				this.height = 3;
-				return 3;
-			} else if (this.shape[1].includes(1)) {
-				
-				this.height = 2;
-				return 2;
-			} else {
-				this.height = 1;
-				return 1;
-			}
-		}
-		
-		this.countWidth = function(){
-			
-			var rowWidths = [this.crw(this.shape[0]), this.crw(this.shape[1]), this.crw(this.shape[2]), this.crw(this.shape[3])];
-			var result = Math.max(...rowWidths);
-			this.width = result;
-			return result;
-		}
-		
-		this.crw = function(row){
-			
-			var result = 0;
-			
-			for(let i = 0; i<4; i++){
-				
-				if(row[i]==1){
-					result = i+1;
-				}
-			}
-			return result;
-		}
-		
-		this.rotate = function() {
-			
-			var nShape = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
-			
-			for(var i = 0; i<4; i++){
-				
-				for(var j = 0; j<4; j++) {
-					
-					if(this.shape[i][j] == 1) {
-						
-						nShape[j][i] = 1;
-					}
-				}
-			}
-			
-			return nShape;
-		}
-		
-		
-		this.draw = function(color){
-		
-			for(var i = 0; i < 4; i++) {
-				
-				for(var j = 0; j < 4 ; j++) {
-					
-					if(this.shape[i][j] == 1){
-							
-						$("#r"+(i+this.x)+"c"+(j+ this.y)).css("backgroundColor", color);
-					}
-				}
-			}
-		}
-		
-		this.clear = function(){
-			
-			this.draw("white");
+			$("#r" + index + "c" + i).css("backgroundColor", emptyColor);
 		}
 	}
 
