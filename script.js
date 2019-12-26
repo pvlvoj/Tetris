@@ -13,6 +13,12 @@ $(document).ready(function() {
 	let isPlaying = false;
 	
 	let emptyColor = "rgba(0, 128, 0, 0.2)";
+	
+	let msIter = 200;
+	
+	let iterator;
+	
+	let calculating = false;
 
 
 	/**************************************************************************
@@ -25,10 +31,10 @@ $(document).ready(function() {
 		
 		constructor(shape, color){
 		
-			this.x = 0;
-			this.y = 0;
 			this.shape = shape;
 			this.color = color;
+			this.x = Math.round((defColNum/2) - 2);
+			this.y = 0 - (this.countHeight() - 1);
 		}
 		
 		log(){
@@ -117,24 +123,33 @@ $(document).ready(function() {
 		
 		moveD() {
 			
+			
+			calculating = true;
+		
 			if((this.y + this.countHeight()) < defRowNum){
+				
 				if(this.checkDown()){
 					this.y++;
 					this.draw(this.color);
+					calculating = false;
 					return true;
 				}
 				else {
 					checkForFullLines();
+					calculating = false;
 					return false;
 				}
 			}
 			else {
+				checkForFullLines();
+				calculating = false;
 				return false;
 			}
 		}
 		
 		checkDown() {
 			
+			calculating = true;
 			var ok = true;
 			this.clear();
 			
@@ -149,6 +164,15 @@ $(document).ready(function() {
 						ok = false;
 					}
 				}
+			}
+			if((!ok) && (this.y < 0)){
+				
+				ok = false;
+				stop();
+				console.log("game over");
+			}
+			else {
+				calculating = false;
 			}
 			return ok;
 		}
@@ -178,6 +202,8 @@ $(document).ready(function() {
 		
 		moveRight() {
 			
+			calculating = true;
+			
 			var ok = true;
 			this.clear();
 			
@@ -199,6 +225,7 @@ $(document).ready(function() {
 			}
 			this.draw(this.color);
 		}
+		calculating = false;
 	}
 
 
@@ -216,16 +243,16 @@ $(document).ready(function() {
 	*/
 
 	let shapes = [
-		[
+/*		[
 		[1, 1, 0, 0],
 		[0, 1, 1, 0],
 		[0, 0, 0, 0], 
 		[0, 0, 0, 0]],
-		[
+		*/[
 		[1, 1, 0, 0],
 		[1, 1, 0, 0],
 		[0, 0, 0, 0],
-		[0, 0, 0, 0]],
+		[0, 0, 0, 0]]/*,
 		[
 		[1, 1, 1, 1],
 		[0, 0, 0, 0],
@@ -237,13 +264,22 @@ $(document).ready(function() {
 		[0, 0, 0, 0],
 		[0, 0, 0, 0],
 		],
+		
+		[
+		[1, 1, 1, 0],
+		[1, 0, 0, 0],
+		[0, 0, 0, 0],
+		[0, 0, 0, 0]
+		]*/
 	];
 
-	let shapeColors = ["red", "blue", "purple", "yellow", "green", "orange", "pink"];
+	let shapeColors = ["red", "blue", "purple", "yellow", "green", "orange", "brown"];
 
-	let shape = new Shape(randomArrayPick(shapes), randomArrayPick(shapeColors));
+	let shape;
 	
 	let state = true;
+	
+	let score = 0;
 
 	$("#tlacitko").click(function(){
 	
@@ -265,7 +301,7 @@ $(document).ready(function() {
 
 	$("#posunDolu").click(function(){
 		
-		setInterval(moveDown, 200);
+		run();
 	});
 	
 	
@@ -274,41 +310,37 @@ $(document).ready(function() {
 		shape.moveRight();
 	});
 	
-	
-	function mng(){
+	function run(){
 		
-		if(state){
-			shape = new Shape(randomArrayPick(shapes), randomArrayPick(shapeColors));
-			shape.log();
-			shape.draw(shape.color);
-			console.log("Shape drawn");
-			state = false;
-		}
-		else {
-			shape.clear();
-			console.log("Shape cleared");
-			state = true;
-		}
+		shape = new Shape(randomArrayPick(shapes), randomArrayPick(shapeColors));
+		increaseScore(0);
+		isPlaying = true;
+		start(msIter);
 	}
 	
+
 	function clearShape(){
 		
 		shape.clear();
 	}
 	
 	function moveDown() {
-		
+	
 		if(state){
 			if(!shape.moveD()) {
-				shape = new Shape(randomArrayPick(shapes), randomArrayPick(shapeColors));
-				shape.moveD();
+				if(!calculating){
+					shape = new Shape(randomArrayPick(shapes), randomArrayPick(shapeColors));
+				}
+				else {
+					state = false;
+				}
 			}
-			state = false;
 		}
 		else{
 			state = true;
 		}
 	}
+	
 	
 	
 	function drawShape(){
@@ -318,13 +350,24 @@ $(document).ready(function() {
 	
 	function checkForFullLines() {
 		
-		for(var i = defRowNum - 1; i > (-1); i--) {
-			
-			if(checkForLine(i)){
-				
-				emptyTheLine(i);
+		 
+		var indicator = false;
+		for(var j = 0; j <=1; j++){
+			for(var i = defRowNum - 1; i > (-1); i--) {
+					
+				if(checkForLine(i)){
+					increaseScore(100);
+					emptyTheLine(i);
+					indicator = true;
+									
+					for(var r = i; r>=0; r--) {
+						
+						moveLineDown(r);
+					}
+				}
 			}
 		}
+		return indicator;
 	}
 	
 	function checkForLine(index) {
@@ -341,7 +384,7 @@ $(document).ready(function() {
 			var bc = $("#r" + index + "c" + i).css("backgroundColor");
 			
 			if(bc == emptyColor) {
-				
+
 				fullLine = false;
 				break;
 			}
@@ -349,12 +392,40 @@ $(document).ready(function() {
 		
 		return fullLine;
 	}
+
 	
 	function emptyTheLine(index) {
 		
 		for(var i = 0; i < defColNum; i++) {
 			
 			$("#r" + index + "c" + i).css("backgroundColor", emptyColor);
+		}
+	}
+	
+	function increaseScore(forVal) {
+		
+		score = score + forVal;
+		$("#score").html("Score: " + score);
+	}
+	
+	
+	function stop(){
+		
+		clearInterval(iterator);
+	}
+	
+	function start(ms) {
+		
+		iterator = setInterval(moveDown, ms);
+	}
+	
+	function moveLineDown(index) {
+		
+		for(var c = 0; c<defColNum; c++) {
+			
+			var blockColor = $("#r" + index + "c" + c).css("backgroundColor");
+			
+			$("#r" + (index + 1) + "c" + c).css("backgroundColor", blockColor);
 		}
 	}
 
@@ -382,4 +453,70 @@ $(document).ready(function() {
 	
 		return Math.floor(Math.random() * (max - min + 1) + min);
 	}
+	
+	
+	/**
+	 * Pri stiskunti klavesy se spusti tato anonymni funkce
+	 */
+	$(document).keydown(function(e) {
+		
+    switch(e.which) {
+		
+		case 32: {
+			if(isPlaying == false){
+				isPlaying = true;
+				start(msIter);
+			}
+			else {
+				isPlaying = false;
+				stop();
+			}
+			break;
+		} // spacebar
+		
+        case 37: {
+			if(isPlaying){
+				shape.moveLeft();
+				break;
+			}
+		} 				// levo
+
+        case 39: {
+			if(isPlaying){
+				shape.moveRight();
+				break;
+			}
+		}				// pravo
+		
+        case 40: {
+			if(isPlaying){
+				shape.moveD();
+				break;
+			}
+		}				// dolu
+		
+		
+		case 80: {		// p
+			if(isPlaying == false){
+				isPlaying = true;
+				start(msIter);
+				increaseScore(0);
+			}
+			else {
+				isPlaying = false;
+				stop();
+				$("#score").html("Pauza");
+			}
+			break;
+		}
+		
+        
+		
+		default: return;
+    }
+    e.preventDefault(); //brani pohybu
+});
+	
+	
+	
 });
