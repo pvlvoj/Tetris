@@ -14,11 +14,27 @@ $(document).ready(function() {
 	
 	let emptyColor = "rgba(0, 128, 0, 0.2)";
 	
-	let msIter = 200;
+	let msIter = 500;
 	
 	let iterator;
 	
 	let calculating = false;
+	
+	
+	$("#gameCanvas").empty();
+		
+	var table = "";
+	for(iter = 0; iter<defRowNum; iter++){
+		
+		table = table + "<tr id='r" + iter + "'>";
+		for(j_iter = 0; j_iter<defColNum; j_iter++){
+			
+			table = table + "<td id='r" + iter + "c" + j_iter + "'></td>";
+		}	
+		table = table + "</tr>";
+	}
+	$("#gameCanvas").append(table);
+	$("td").css("backgroundColor", emptyColor);
 
 
 	/**************************************************************************
@@ -93,12 +109,57 @@ $(document).ready(function() {
 					
 					if(this.shape[i][j] == 1) {
 						
-						nShape[j][i] = 1;
+						nShape[3-j][i] = 1;
 					}
 				}
 			}
 			
-			return nShape;
+			shape.clear();
+			
+			if(this.rotateCheck(nShape)){
+				
+				var y_coor = this.y;
+				var x_coor = this.x;
+				var color_oldShape = this.color;
+
+				shape = new Shape(nShape, this.color);
+				shape.y = y_coor;
+				shape.x = x_coor;
+				shape.color = color_oldShape;
+				shape.draw(shape.color);
+			}
+			else {
+				
+				shape.draw(color);
+			}
+		}
+		
+		rotateCheck(newShape){
+			
+			var ok = true;
+			
+			for(var i = 0; i<4; i++){
+				
+				for(var j = 0; j<4; j++){
+					
+					if(newShape[i][j] == 1) {
+						
+						var bc = $("#r" + (i + this.y) + "c" + (j + this.x)).css("backgroundColor");
+						
+						if((j + this.x) > (defColNum-1)){
+							
+							ok = false;
+							shape.draw(shape.color);
+						}						
+						else if(bc != emptyColor){
+							
+							ok = false;
+							break;
+						}
+					}
+				}
+			}
+			return ok;
 		}
 		
 		
@@ -243,16 +304,21 @@ $(document).ready(function() {
 	*/
 
 	let shapes = [
-/*		[
+		[
 		[1, 1, 0, 0],
 		[0, 1, 1, 0],
 		[0, 0, 0, 0], 
 		[0, 0, 0, 0]],
-		*/[
+		[
+		[0, 1, 1, 0],
+		[1, 1, 0, 0],
+		[0, 0, 0, 0], 
+		[0, 0, 0, 0]],
+		[
 		[1, 1, 0, 0],
 		[1, 1, 0, 0],
 		[0, 0, 0, 0],
-		[0, 0, 0, 0]]/*,
+		[0, 0, 0, 0]],
 		[
 		[1, 1, 1, 1],
 		[0, 0, 0, 0],
@@ -270,7 +336,13 @@ $(document).ready(function() {
 		[1, 0, 0, 0],
 		[0, 0, 0, 0],
 		[0, 0, 0, 0]
-		]*/
+		],
+		[
+		[1, 1, 1, 0],
+		[0, 1, 0, 0],
+		[0, 0, 0, 0],
+		[0, 0, 0, 0]
+		]
 	];
 
 	let shapeColors = ["red", "blue", "purple", "yellow", "green", "orange", "brown"];
@@ -307,7 +379,7 @@ $(document).ready(function() {
 	
 	$("#posunR").click(function(){
 		
-		shape.moveRight();
+		shape.rotate();
 	});
 	
 	function run(){
@@ -326,18 +398,20 @@ $(document).ready(function() {
 	
 	function moveDown() {
 	
-		if(state){
-			if(!shape.moveD()) {
-				if(!calculating){
-					shape = new Shape(randomArrayPick(shapes), randomArrayPick(shapeColors));
-				}
-				else {
-					state = false;
+		if(isPlaying){
+			if(state){
+				if(!shape.moveD()) {
+					if(!calculating){
+						shape = new Shape(randomArrayPick(shapes), randomArrayPick(shapeColors));
+					}
+					else {
+						state = false;
+					}
 				}
 			}
-		}
-		else{
-			state = true;
+			else{
+				state = true;
+			}
 		}
 	}
 	
@@ -352,7 +426,7 @@ $(document).ready(function() {
 		
 		 
 		var indicator = false;
-		for(var j = 0; j <=1; j++){
+		for(var j = 0; j <= 4; j++){
 			for(var i = defRowNum - 1; i > (-1); i--) {
 					
 				if(checkForLine(i)){
@@ -360,7 +434,7 @@ $(document).ready(function() {
 					emptyTheLine(i);
 					indicator = true;
 									
-					for(var r = i; r>=0; r--) {
+					for(var r = i-1; r >= 0; r--) {
 						
 						moveLineDown(r);
 					}
@@ -421,7 +495,7 @@ $(document).ready(function() {
 	
 	function moveLineDown(index) {
 		
-		for(var c = 0; c<defColNum; c++) {
+		for(var c = 0; c < defColNum; c++) {
 			
 			var blockColor = $("#r" + index + "c" + c).css("backgroundColor");
 			
@@ -480,6 +554,14 @@ $(document).ready(function() {
 				break;
 			}
 		} 				// levo
+
+
+		case 38: {		// nahoru
+			if(isPlaying){
+				shape.rotate();
+				break;
+			}
+		} 
 
         case 39: {
 			if(isPlaying){
