@@ -1,9 +1,15 @@
 $(document).ready(function() {
 
+
+	$("#score").hide();
+
 	/* Defaultní hodnoty radku a sloupcu */
 	let defRowNum = 20;
 	let defColNum = 10;
-
+	
+	var player = "";
+	
+	var started = false;
 
 	/* Pocty sloupcu a radku hraciho pole */
 	let rowNum = defRowNum;
@@ -14,11 +20,15 @@ $(document).ready(function() {
 	
 	let emptyColor = "rgba(0, 128, 0, 0.2)";
 	
-	let msIter = 500;
+	let msIter = 1000;
 	
 	let iterator;
 	
 	let calculating = false;
+	
+	const xhr = new XMLHttpRequest();
+	
+	getResults();
 	
 	
 	$("#gameCanvas").empty();
@@ -231,6 +241,8 @@ $(document).ready(function() {
 				ok = false;
 				stop();
 				console.log("game over");
+				sendResults();
+				endGame();
 			}
 			else {
 				calculating = false;
@@ -264,7 +276,6 @@ $(document).ready(function() {
 		moveRight() {
 			
 			calculating = true;
-			
 			var ok = true;
 			this.clear();
 			
@@ -351,10 +362,38 @@ $(document).ready(function() {
 	
 	let state = true;
 	
-	let score = 0;
-
-	$("#tlacitko").click(function(){
+	var score = 0;
 	
+
+	function startNewGame(){
+		
+		var insertedName = $("#vstupJmena").val();
+		
+		if(insertedName.length<1) {
+			
+			alert("Nebylo zadano platne jmeno!");
+			return false;
+		}
+		else {
+			
+		player = insertedName;
+		
+		$("#start").hide();
+		
+		$("#form").hide();
+		
+		showScore();
+		
+		started = false;
+		
+		stop();
+		iterator = null;
+		
+		started = true;
+		msIter = 1000;
+		
+		score = 0;
+		
 		$("#gameCanvas").empty();
 		
 		var table = "";
@@ -369,20 +408,34 @@ $(document).ready(function() {
 		}
 		$("#gameCanvas").append(table);
 		$("td").css("backgroundColor", emptyColor);
-	});
+		isPlaying = true;
+		started = true;
+		return true;
+		}
+	}
 
-	$("#posunDolu").click(function(){
+
+	$("#start").click(function(){
 		
+		if(startNewGame()){
+
+		started = false;		
+		iterator = null;
+		shape = null;
+		started = true;
 		run();
+		}
 	});
 	
-	
-	$("#posunR").click(function(){
+	function showScore(){
 		
-		shape.rotate();
-	});
+		$("#score").show();
+	}
+	
 	
 	function run(){
+		
+		stop();
 		
 		shape = new Shape(randomArrayPick(shapes), randomArrayPick(shapeColors));
 		increaseScore(0);
@@ -431,6 +484,15 @@ $(document).ready(function() {
 					
 				if(checkForLine(i)){
 					increaseScore(100);
+					if(msIter>100){
+						
+						msIter = msIter - 50;
+						console.log("getting faster");
+					}
+					
+					pause();
+					pause();
+					
 					emptyTheLine(i);
 					indicator = true;
 									
@@ -479,13 +541,16 @@ $(document).ready(function() {
 	function increaseScore(forVal) {
 		
 		score = score + forVal;
-		$("#score").html("Score: " + score);
+		$("#score").html("<center><h3>Score: " + score + "</h3></center>");
+		
 	}
 	
 	
 	function stop(){
 		
 		clearInterval(iterator);
+		
+		getResults();
 	}
 	
 	function start(ms) {
@@ -502,9 +567,30 @@ $(document).ready(function() {
 			$("#r" + (index + 1) + "c" + c).css("backgroundColor", blockColor);
 		}
 	}
-
-
-
+	
+	function endGame(){
+		
+		started = false;
+		getResults();
+		$("#start").show();
+		$("#score").hide();
+		$("#form").show();
+	}
+	
+	function pause(){
+		
+		if(started){
+			if(isPlaying == false){
+				isPlaying = true;
+				start(msIter);
+				increaseScore(0);
+			} else {
+				isPlaying = false;
+				stop();
+				$("#score").html("Pauza");
+			}
+		}
+	}
 
 
 /*****************************************************************************
@@ -528,6 +614,96 @@ $(document).ready(function() {
 		return Math.floor(Math.random() * (max - min + 1) + min);
 	}
 	
+	/**
+	 *
+	 */
+	function compareTwoArrays(a, b){
+		
+		if(a[1] > b[1]){
+			
+			return -1;
+		}
+		else if(a[1] < b[1]){
+			
+			return 1;
+		}
+		else {
+			
+			return 0;
+		}
+	}
+	
+	function sortResults(newArray){
+		
+		newArray = newArray.sort(compareTwoArrays)
+		
+		$("#results").empty();
+		$("#results").append("<table id='tableOfResults'></table>");
+		$("#tableOfResults").append("<tr><th><div>Jméno</div></th><th><div>Skóre</div></th></tr>");
+		
+		for(var i = 0; i<newArray.length-1; i++){
+			
+			$("#tableOfResults").append("<tr><td class='res'>" + newArray[i][0]
+			+ "</td><td class='res'>" + newArray[i][1] + "</td></tr>");
+		}
+		
+	}
+	
+	/**
+	 * Funkce pro ziskavani dat ze serveru (AJAX)
+	 */
+	function getResults(){
+		
+		xhr.open("get", "./results.txt", true);
+		xhr.send();
+		 
+		xhr.onreadystatechange = function() {
+			 
+			if(xhr.readyState == 4){
+				 
+				if(xhr.status == 200){
+					 
+					var vstup;
+					vstup = xhr.responseText.split(";");
+					
+					var arr1 = [];
+					var arr2 = [];
+					
+					for (var j = 0; j<vstup.length-1; j++){
+						
+						arr1.push(vstup[j].split(","));
+					}		
+					sortResults(arr1);
+				}
+				if(xhr.status == 404) {
+					
+					console.log("Nepovedlo se spojit se serverem a ziskat data");
+				}
+			}
+		}
+	}
+	
+	
+	
+	/**
+	 * Odesle vysledek na server
+	 */
+	function sendResults(){	
+
+		var playerName = player;
+		var playerScore = score;
+		
+		var xmlhr = new XMLHttpRequest();
+		xmlhr.open("POST", "./php.php", true);
+		xmlhr.setRequestHeader('Content-Type', 'application/json');
+		xmlhr.send(JSON.stringify(
+		{
+			name: player,
+			sc: score
+		}));
+	}
+	
+	
 	
 	/**
 	 * Pri stiskunti klavesy se spusti tato anonymni funkce
@@ -537,68 +713,78 @@ $(document).ready(function() {
     switch(e.which) {
 		
 		case 32: {
-			if(isPlaying == false){
-				isPlaying = true;
-				start(msIter);
-			}
-			else {
-				isPlaying = false;
-				stop();
-			}
+			pause();
 			break;
 		} // spacebar
 		
         case 37: {
-			if(isPlaying){
+			if(isPlaying && started){
 				shape.moveLeft();
+				e.preventDefault();
 				break;
 			}
 		} 				// levo
 
 
 		case 38: {		// nahoru
-			if(isPlaying){
+			if(isPlaying && started){
 				shape.rotate();
+				e.preventDefault();
 				break;
 			}
 		} 
 
         case 39: {
-			if(isPlaying){
+			if(isPlaying && started){
 				shape.moveRight();
+				e.preventDefault();
 				break;
 			}
 		}				// pravo
 		
         case 40: {
-			if(isPlaying){
+			if(isPlaying && started){
 				shape.moveD();
+				e.preventDefault();
 				break;
 			}
 		}				// dolu
 		
 		
 		case 80: {		// p
-			if(isPlaying == false){
-				isPlaying = true;
-				start(msIter);
-				increaseScore(0);
-			}
-			else {
-				isPlaying = false;
-				stop();
-				$("#score").html("Pauza");
-			}
+			pause();
 			break;
 		}
 		
-        
-		
 		default: return;
     }
-    e.preventDefault(); //brani pohybu
 });
-	
-	
+
+	$("#rot").click(function(){		
+		
+		if(isPlaying && started){
+			shape.rotate();
+		}
+	});
+	$("#lft").click(function(){
+		if(isPlaying && started){
+			shape.moveLeft();
+		}
+	});
+	$("#rgh").click(function(){
+		if(isPlaying && started){
+			shape.moveRight();
+		}
+		
+	});
+	$("#dwn").click(function(){
+		if(isPlaying && started){
+			shape.moveD();
+		}
+		
+	});
+	$("#pse").click(function(){
+		pause();
+	});
 	
 });

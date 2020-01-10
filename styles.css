@@ -1,0 +1,178 @@
+body {
+	
+	background-image: url("tblur.jpg");
+	background-repear: no-repeat;
+}
+
+
+td {
+	width: 20;
+	height: 20;
+	border: solid black 1px;
+}
+
+#gcwrap {
+	background-color: lightyellow;
+}
+
+h1{
+	text-align: center;
+}
+
+#score {
+	font-weight: 700;
+}
+
+#gameCanvas {
+	
+	margin-left:auto;
+	margin-right:auto;
+	background-color: lightyellow;
+}
+
+.game {
+	border-radius: 5px;
+	margin: auto;
+	width: 50%;
+	margin-top: 20px;
+}
+
+.l {
+	border: solid black 1px;
+	float: left;
+	width: 40%;
+}
+
+.r {
+	border: solid black 1px;
+	float: left;
+	width: 40%;
+	background-color: lightyellow;
+}
+
+.result {
+	font-weight: 700;
+}
+
+#results {
+	margin-top: 5px;
+	height: 240px;
+	overflow: auto;
+	border: solid black 1px;
+}
+
+#menu {
+	height: 100px;
+	border: solid black 1px;
+	background-color: lightyellow;
+}
+
+#tableOfResults {
+
+	border: solid black 1px;
+	width: 90%;
+	margin-left: 5%;
+	margin-right: 5%;
+	background-color: lightyellow;
+}
+
+.formular {
+	
+	margin-top: 20px;
+}
+
+#vstupJmena{
+	border: solid black 1px;
+	border-radius: 5px;
+}
+
+#form {
+	
+	width: 90%;
+	margin-left: 5%;
+	margin-right: 5%;
+}
+
+#start {
+	
+	width: 40%;
+	margin-left: 30%;
+	margin-right: 30%;
+}
+
+#tableOfResults th div {
+	
+	border: solid black 1px;
+	padding-left: 5px;
+	padding-right: 5px;
+}
+
+#ovladani {
+	border: solid black 1px;
+	padding: 5px;
+	display: flex;
+	justify-content: space-around;
+	flex-direction: row;
+	flex-wrap: wrap;
+	height: 80px;
+	padding-bottom: 10px;
+	background-color: lightyellow;
+}
+
+.ovlB {
+	
+	width: 70px;
+	height: 40px;
+	margin-top: 2px;
+	margin-bottom: 2px;
+}
+
+
+@media only screen and (max-width: 1000px){
+	
+	.l {
+		float: none;
+		width: 100%;
+	}
+	.r {
+		float: none;
+		width: 100%;
+	}
+	.formular {
+		width: 90%;
+		margin-left: 5%;
+		margin-right: 5%;
+		margin-bottom: 0px;
+		margin-top: 0px;
+	}
+	#menu {
+		padding: 5px;
+		height: 65px;
+	}
+	.ovlB{
+		width: 45px;
+		height: 20px;
+		font-size: 8px;
+		text-align: center;
+	}
+	
+	td {
+		width: 10px;
+		height: 10px;
+	}
+	
+	h1 {
+		font-size: 15px;
+		margin-bottom: 5px;
+		margin-top: 5px;
+	}
+	.game{
+		margin-top: 0px;
+	}
+	#ovladani {
+		height: 50px;
+	}
+	.res {
+		font-size: 10px;
+	}
+}
